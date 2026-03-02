@@ -5,7 +5,7 @@
  * and registering action handlers (Done / Snooze).
  */
 
-let _permission = Notification?.permission ?? 'default';
+let _permission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
 
 export async function requestPermission() {
   if (!('Notification' in window)) return 'unsupported';
