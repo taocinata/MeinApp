@@ -1,0 +1,23 @@
+@use '../utilities/tokens' as *;
+
+// Reusable card component
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  padding: $space-5;
+  box-shadow: var(--shadow-sm);
+
+  &--elevated { box-shadow: var(--shadow-md); }
+
+  &__title {
+    font-size: $font-size-base;
+    font-weight: 600;
+    margin-bottom: $space-2;
+  }
+
+  &__meta {
+    font-size: $font-size-xs;
+    color: var(--color-muted);
+  }
+}

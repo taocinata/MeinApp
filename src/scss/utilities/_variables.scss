@@ -1,0 +1,32 @@
+@use 'tokens' as *;
+
+// CSS Custom Properties — Light theme (default)
+:root {
+  --color-primary:   #{$color-primary};
+  --color-secondary: #{$color-secondary};
+  --color-accent:    #{$color-accent};
+
+  --color-bg:      #{$color-bg-light};
+  --color-surface: #{$color-surface-light};
+  --color-text:    #{$color-text-light};
+  --color-muted:   #{$color-muted-light};
+  --color-border:  #{$color-border-light};
+
+  --shadow-sm: #{$shadow-sm};
+  --shadow-md: #{$shadow-md};
+  --shadow-lg: #{$shadow-lg};
+
+  --radius-sm:   #{$radius-sm};
+  --radius-md:   #{$radius-md};
+  --radius-lg:   #{$radius-lg};
+  --radius-full: #{$radius-full};
+}
+
+// Dark theme overrides
+[data-theme="dark"] {
+  --color-bg:      #{$color-bg-dark};
+  --color-surface: #{$color-surface-dark};
+  --color-text:    #{$color-text-dark};
+  --color-muted:   #{$color-muted-dark};
+  --color-border:  #{$color-border-dark};
+}

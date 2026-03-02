@@ -1,0 +1,89 @@
+@use '../utilities/tokens' as *;
+
+// Dashboard page styles
+.dashboard {
+  &__greeting {
+    margin-bottom: $space-6;
+
+    h2 {
+      font-size: $font-size-2xl;
+      font-weight: 700;
+    }
+
+    p { color: var(--color-muted); margin-bottom: 0; }
+  }
+
+  &__section {
+    margin-bottom: $space-8;
+
+    &-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $space-4;
+
+      h3 { margin: 0; }
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  &__empty {
+    text-align: center;
+    padding: $space-10 0;
+    color: var(--color-muted);
+
+    svg { margin: 0 auto $space-3; opacity: 0.4; width: 48px; height: 48px; }
+  }
+}
+
+// Routine / Reminder row
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-4;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-lg;
+  cursor: pointer;
+  transition: box-shadow $duration-fast $ease-out;
+
+  &:hover { box-shadow: var(--shadow-md); }
+
+  &__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: $radius-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+
+    &--beauty  { background: #FCE7F3; }
+    &--therapy { background: #EDE9FE; }
+    &--general { background: #E0F2FE; }
+  }
+
+  &__body { flex: 1; min-width: 0; }
+  &__name {
+    font-weight: 600;
+    font-size: $font-size-sm;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &__time { font-size: $font-size-xs; color: var(--color-muted); }
+
+  &__actions { display: flex; gap: $space-2; }
+
+  &.is-done {
+    opacity: 0.55;
+    .routine-item__name { text-decoration: line-through; }
+  }
+}

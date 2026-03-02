@@ -1,0 +1,19 @@
+{
+  "name": "meinapp",
+  "version": "0.1.0",
+  "description": "Personal Notification & Activity Tracking App (PWA, Vanilla JS)",
+  "private": true,
+  "scripts": {
+    "build:css": "sass src/scss/main.scss public/css/main.css --style=compressed --no-source-map",
+    "build:js":  "esbuild src/js/app.js --bundle --minify --outfile=public/js/bundle.min.js --platform=browser --target=es2020",
+    "watch:css": "sass src/scss/main.scss public/css/main.css --watch --source-map",
+    "watch:js":  "esbuild src/js/app.js --bundle --outfile=public/js/bundle.min.js --platform=browser --target=es2020 --watch",
+    "serve":     "node server/server.js",
+    "dev":       "npm run watch:css & npm run watch:js & npm run serve",
+    "build":     "npm run build:css && npm run build:js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.3",
+    "sass": "^1.77.0"
+  }
+}

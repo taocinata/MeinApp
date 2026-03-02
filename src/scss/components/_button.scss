@@ -1,0 +1,78 @@
+@use '../utilities/tokens' as *;
+
+// Button component
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-2;
+  padding: $space-3 $space-5;
+  border-radius: $radius-full;
+  font-size: $font-size-sm;
+  font-weight: 600;
+  transition: opacity $duration-fast $ease-out,
+              transform $duration-fast $ease-out,
+              background $duration-fast $ease-out;
+
+  &:active { transform: scale(0.97); }
+
+  // Variants
+  &--primary {
+    background: var(--color-primary);
+    color: #fff;
+    &:hover { opacity: 0.88; }
+  }
+
+  &--secondary {
+    background: var(--color-secondary);
+    color: #fff;
+    &:hover { opacity: 0.88; }
+  }
+
+  &--ghost {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    &:hover { background: color-mix(in srgb, var(--color-primary) 10%, transparent); }
+  }
+
+  &--icon {
+    padding: $space-2;
+    border-radius: $radius-full;
+    width: 40px;
+    height: 40px;
+    svg { width: 20px; height: 20px; }
+  }
+
+  // Sizes
+  &--sm { padding: $space-2 $space-4; font-size: $font-size-xs; }
+  &--lg { padding: $space-4 $space-8; font-size: $font-size-base; }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// Floating Action Button
+.fab {
+  position: fixed;
+  bottom: calc(#{$space-12} + #{$space-6} + env(safe-area-inset-bottom));
+  right: $space-6;
+  width: 56px;
+  height: 56px;
+  border-radius: $radius-full;
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+  transition: transform $duration-fast $ease-out,
+              box-shadow $duration-fast $ease-out;
+
+  svg { width: 24px; height: 24px; }
+  &:hover { transform: scale(1.05); box-shadow: var(--shadow-lg); }
+  &:active { transform: scale(0.95); }
+}

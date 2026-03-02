@@ -1,0 +1,39 @@
+@use '../utilities/tokens' as *;
+
+// Form elements
+.form-group {
+  margin-bottom: $space-5;
+
+  label {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    margin-bottom: $space-2;
+    color: var(--color-text);
+  }
+}
+
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: $space-3 $space-4;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  font-family: $font-family;
+  color: var(--color-text);
+  transition: border-color $duration-fast $ease-out,
+              box-shadow $duration-fast $ease-out;
+
+  &::placeholder { color: var(--color-muted); }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+  }
+}
+
+.textarea { resize: vertical; min-height: 80px; }

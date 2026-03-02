@@ -1,0 +1,353 @@
+@use '../utilities/tokens' as *;
+
+// ── Calendar wrapper ──────────────────────────────────────
+.cal {
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $space-5;
+
+    &-title {} // used via __month-title below
+  }
+
+  &__month-title {
+    font-size: $font-size-lg;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  // ── Grid ─────────────────────────────────────────────
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: $space-6;
+  }
+
+  &__dow {
+    text-align: center;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    color: var(--color-muted);
+    padding: $space-2 0;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &__cell {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: $space-1;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: background $duration-fast $ease-out;
+
+    &:hover { background: color-mix(in srgb, var(--color-primary) 8%, transparent); }
+
+    &--empty   { cursor: default; pointer-events: none; }
+    &--today   {
+      .cal__day-num {
+        background: var(--color-primary);
+        color: #fff;
+        border-radius: $radius-full;
+        width: 26px;
+        height: 26px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+    &--selected {
+      background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+      outline: 2px solid var(--color-primary);
+    }
+  }
+
+  &__day-num {
+    font-size: $font-size-xs;
+    font-weight: 500;
+    line-height: 1;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  // ── Event dots ────────────────────────────────────────
+  &__dots {
+    display: flex;
+    gap: 2px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 2px;
+  }
+
+  &__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+  }
+
+  // ── Add button ────────────────────────────────────────
+  &__fab {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    margin: 0 auto;
+    padding: $space-3 $space-6;
+
+    svg { width: 18px; height: 18px; }
+  }
+
+  // ── Day sheet (slide up from bottom of content area) ──
+  &__day-sheet {
+    margin-top: $space-4;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-lg;
+    padding: $space-4 $space-5 $space-6;
+    animation: sheet-fade $duration-normal $ease-out forwards;
+  }
+
+  &__day-sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: $radius-full;
+    background: var(--color-border);
+    margin: 0 auto $space-4;
+  }
+
+  &__day-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $space-4;
+
+    h3 { font-size: $font-size-base; font-weight: 700; margin: 0; }
+  }
+
+  &__day-sheet-list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-3;
+  }
+
+  // ── Event row inside sheet ────────────────────────────
+  &__event-row {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    background: var(--color-bg);
+    border-radius: $radius-md;
+    border: 1px solid var(--color-border);
+  }
+
+  &__event-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: $radius-full;
+    flex-shrink: 0;
+  }
+
+  &__event-body { flex: 1; min-width: 0; }
+  &__event-title { font-size: $font-size-sm; font-weight: 600; }
+  &__event-meta  {
+    font-size: $font-size-xs;
+    color: var(--color-muted);
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    margin-top: 2px;
+  }
+  &__event-time  { font-size: $font-size-xs; color: var(--color-muted); }
+
+  // ── Color picker ──────────────────────────────────────
+  &__color-picker {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: $space-3;
+  }
+
+  &__color-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-full;
+    border: 3px solid transparent;
+    transition: border-color $duration-fast $ease-out,
+                transform $duration-fast $ease-out;
+    position: relative;
+
+    &:hover  { transform: scale(1.12); }
+    &.is-active {
+      border-color: var(--color-text);
+      transform: scale(1.18);
+      &::after {
+        content: '✓';
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #fff;
+        font-weight: 700;
+        text-shadow: 0 1px 2px rgba(0,0,0,.4);
+      }
+    }
+  }
+
+  // ── Day-of-week picker (in recurring options) ─────────
+  &__day-picker {
+    display: flex;
+    gap: $space-2;
+  }
+
+  &__day-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: $radius-full;
+    font-size: $font-size-xs;
+    font-weight: 700;
+    border: 2px solid var(--color-border);
+    color: var(--color-muted);
+    transition: all $duration-fast $ease-out;
+
+    &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    &.is-active {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+  }
+}
+
+@keyframes sheet-fade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Dashboard view-toggle buttons ────────────────────────
+.view-toggle {
+  display: flex;
+  gap: $space-1;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: $radius-full;
+  padding: 2px;
+
+  &__btn {
+    width: 30px;
+    height: 30px;
+    border-radius: $radius-full;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+    transition: all $duration-fast $ease-out;
+
+    svg { width: 15px; height: 15px; }
+
+    &.is-active {
+      background: var(--color-primary);
+      color: #fff;
+    }
+  }
+}
+
+// ── Dashboard mini calendar (read-only) ──────────────────
+.mini-cal {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    font-size: $font-size-xs;
+  }
+
+  &__dow {
+    text-align: center;
+    color: var(--color-muted);
+    font-weight: 600;
+    padding-bottom: $space-1;
+  }
+
+  &__cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 2px;
+    border-radius: $radius-sm;
+    font-size: 10px;
+
+    &--today span {
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: $radius-full;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  &__dots {
+    display: flex;
+    gap: 1px;
+    justify-content: center;
+  }
+
+  &__dot {
+    width: 4px;
+    height: 4px;
+    border-radius: $radius-full;
+  }
+}
+
+// ── Upcoming events list (dashboard) ─────────────────────
+.upcoming-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  &__day {
+    &-label {
+      font-size: $font-size-xs;
+      font-weight: 700;
+      color: var(--color-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: $space-1;
+      margin-top: $space-3;
+      &:first-child { margin-top: 0; }
+    }
+  }
+
+  &__event {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: $radius-md;
+
+    &-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: $radius-full;
+      flex-shrink: 0;
+    }
+    &-title { font-size: $font-size-sm; font-weight: 500; flex: 1; }
+    &-time  { font-size: $font-size-xs; color: var(--color-muted); }
+  }
+}
