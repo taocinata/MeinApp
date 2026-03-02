@@ -19,6 +19,7 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   line-height: 1.5;
+  min-height: 100vh;
   min-height: 100dvh;
   transition: background-color $duration-normal $ease-out,
               color $duration-normal $ease-out;
