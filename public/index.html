@@ -91,6 +91,18 @@
     </svg>
   </button>
 
+  <!-- Catch any JS errors and show them on screen for debugging -->
+  <script>
+    window.addEventListener('error', function(e) {
+      var c = document.getElementById('view-container');
+      if (c) c.innerHTML = '<div style="padding:1rem;color:red;font-size:13px;word-break:break-all"><b>JS Error:</b> ' + e.message + '<br><small>' + (e.filename||'') + ':' + e.lineno + '</small></div>';
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      var c = document.getElementById('view-container');
+      if (c) c.innerHTML = '<div style="padding:1rem;color:red;font-size:13px;word-break:break-all"><b>Promise Error:</b> ' + (e.reason && e.reason.message ? e.reason.message : String(e.reason)) + '</div>';
+    });
+  </script>
+
   <!-- Register Service Worker + Bootstrap app -->
   <script src="./js/bundle.min.js" defer></script>
 

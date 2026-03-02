@@ -5,7 +5,7 @@
  * Handles: notification actions (Done / Snooze), background sync.
  */
 
-const CACHE_NAME  = 'meinapp-v1';
+const CACHE_NAME  = 'meinapp-v4';
 const STATIC_URLS = [
   './',
   './index.html',
@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => caches.match('/index.html')); // offline fallback
+      }).catch(() => caches.match('./index.html')); // offline fallback
     })
   );
 });
