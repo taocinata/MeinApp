@@ -5,7 +5,7 @@
  * Handles: notification actions (Done / Snooze), background sync.
  */
 
-const CACHE_NAME = 'meinapp-95e186c';
+const CACHE_NAME = 'meinapp-a035474';
 const STATIC_URLS = [
   './',
   './index.html',
