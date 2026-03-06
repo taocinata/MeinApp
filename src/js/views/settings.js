@@ -159,9 +159,14 @@ async function exportData() {
   const payload = { exportedAt: new Date().toISOString(), routines, therapy, logs, reminders, events };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
-  const a    = Object.assign(document.createElement('a'), { href: url, download: `meinapp-backup-${Date.now()}.json` });
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `meinapp-backup-${Date.now()}.json`;
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 async function importData(file) {

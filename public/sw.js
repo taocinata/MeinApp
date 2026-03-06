@@ -1,56 +1,70 @@
 /**
  * sw.js — Service Worker
  *
- * Strategy: Cache-first for static assets, network-first for API.
- * Handles: notification actions (Done / Snooze), background sync.
+ * Strategy:
+ *  - HTML + JS bundle: network-first (always get latest, fall back to cache)
+ *  - CSS / icons / manifest: cache-first (stable assets)
  */
 
-const CACHE_NAME = 'meinapp-c8f1262';
-const STATIC_URLS = [
-  './',
-  './index.html',
-  './css/main.css',
-  './manifest.json',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg',
-  './js/bundle.min.js',
-];
+const CACHE_NAME = 'meinapp-ac8a2fd';
 
-// ── Install: pre-cache static assets ────────────────────────
+// Assets that are stable and safe to serve from cache
+const CACHE_FIRST_PATTERNS = [/\.css$/, /\.svg$/, /\.png$/, /manifest\.json$/];
+
+// ── Install: pre-cache stable assets only (NOT the JS bundle) ──
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_URLS))
+    caches.open(CACHE_NAME).then(cache => cache.addAll([
+      './css/main.css',
+      './manifest.json',
+      './icons/icon-192.svg',
+      './icons/icon-512.svg',
+    ]))
   );
-  self.skipWaiting();
+  self.skipWaiting(); // activate immediately without waiting
 });
 
-// ── Activate: clean old caches ───────────────────────────────
+// ── Activate: wipe all old caches ───────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // take control of all open tabs immediately
 });
 
-// ── Fetch: cache-first for static, network for rest ─────────
+// ── Fetch ────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(event.request).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request).then(response => {
-        // Cache successful responses for static assets
+  const url = event.request.url;
+  const isCacheFirst = CACHE_FIRST_PATTERNS.some(p => p.test(url));
+
+  if (isCacheFirst) {
+    // Cache-first: serve from cache, update in background
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        const fetchPromise = fetch(event.request).then(response => {
+          if (response.ok) {
+            caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
+          }
+          return response;
+        });
+        return cached || fetchPromise;
+      })
+    );
+  } else {
+    // Network-first: always try network, fall back to cache (HTML, JS, version.json)
+    event.respondWith(
+      fetch(event.request).then(response => {
         if (response.ok && response.type === 'basic') {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          caches.open(CACHE_NAME).then(c => c.put(event.request, response.clone()));
         }
         return response;
-      }).catch(() => caches.match('./index.html')); // offline fallback
-    })
-  );
+      }).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
+    );
+  }
 });
 
 // ── Skip waiting — activate new SW immediately on message ───
