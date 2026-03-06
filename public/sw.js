@@ -5,7 +5,7 @@
  * Handles: notification actions (Done / Snooze), background sync.
  */
 
-const CACHE_NAME  = 'meinapp-v4';
+const CACHE_NAME = 'meinapp-95e186c';
 const STATIC_URLS = [
   './',
   './index.html',
@@ -51,6 +51,11 @@ self.addEventListener('fetch', (event) => {
       }).catch(() => caches.match('./index.html')); // offline fallback
     })
   );
+});
+
+// ── Skip waiting — activate new SW immediately on message ───
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 // ── Notification: action buttons ────────────────────────────

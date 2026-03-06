@@ -64,10 +64,27 @@ document.getElementById('fab-quick-log')?.addEventListener('click', () => {
 
 // ── Service Worker ────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').then(reg => {
-    console.log('[SW] Registered:', reg.scope);
-  }).catch(err => {
-    console.warn('[SW] Registration failed:', err);
+  // Fetch the version so the SW URL changes on every new build (busts SW cache)
+  fetch('./version.json').then(r => r.json()).then(({ version }) => {
+    navigator.serviceWorker.register(`./sw.js?v=${version}`).then(reg => {
+      console.log('[SW] Registered v' + version, reg.scope);
+      // If there's a waiting SW (new version), activate it immediately
+      if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        nw?.addEventListener('statechange', () => {
+          if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('🆕 New version available — tap to reload', 'info', 0);
+            document.getElementById('toast-container')?.addEventListener('click', () => location.reload(), { once: true });
+          }
+        });
+      });
+    });
+  }).catch(() => {
+    // Fallback: register without version (first load, version.json not yet present)
+    navigator.serviceWorker.register('./sw.js').catch(err =>
+      console.warn('[SW] Registration failed:', err)
+    );
   });
 }
 
