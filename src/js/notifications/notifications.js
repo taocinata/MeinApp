@@ -7,12 +7,12 @@ let _permission = typeof Notification !== 'undefined' ? Notification.permission 
 export async function requestPermission() {
   if (!('Notification' in window)) return 'unsupported';
   if (_permission === 'granted') return 'granted';
-  _permission = await Notification.requestPermission();
+  try { _permission = await Notification.requestPermission(); } catch { _permission = 'denied'; }
   return _permission;
 }
 
 export function canNotify() {
-  return 'Notification' in window && Notification.permission === 'granted';
+  return ('Notification' in window) && Notification.permission === 'granted';
 }
 
 /**
@@ -21,7 +21,7 @@ export function canNotify() {
  */
 export async function notify({ id, title, body, icon }) {
   if (!canNotify()) {
-    console.warn('[notify] Permission not granted. status:', Notification.permission);
+    console.warn('[notify] Permission not granted. status:', ('Notification' in window) ? Notification.permission : 'unsupported');
     return false;
   }
 

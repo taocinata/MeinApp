@@ -124,7 +124,7 @@ onNotificationAction(async ({ action, reminderId }) => {
     bell.style.cssText = 'background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px 8px;position:relative';
     bell.title = 'Notification status';
     const updateBell = () => {
-      const granted = Notification.permission === 'granted';
+      const granted = ('Notification' in window) && Notification.permission === 'granted';
       bell.textContent = granted ? '🔔' : '🔕';
       bell.title = granted ? 'Notifications enabled' : 'Tap to enable notifications';
     };
