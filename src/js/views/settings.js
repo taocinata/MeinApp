@@ -29,9 +29,14 @@ export async function renderSettings(container) {
           <div class="settings__row" id="notif-row">
             <span class="settings__row-label">Browser Notifications</span>
             <span class="settings__row-value" id="notif-status">
-              ${canNotify() ? '✅ Enabled' : '🔕 Disabled'}
+              ${canNotify() ? '✅ Enabled' : '🔕 Tap to enable'}
             </span>
           </div>
+          ${canNotify() ? `
+          <div class="settings__row" id="test-notif-row">
+            <span class="settings__row-label">Test Notification</span>
+            <span class="settings__row-value">▶ Send test</span>
+          </div>` : ''}
         </div>
       </div>
 
@@ -75,7 +80,18 @@ export async function renderSettings(container) {
   container.querySelector('#notif-row').addEventListener('click', async () => {
     const result = await requestPermission();
     container.querySelector('#notif-status').textContent =
-      result === 'granted' ? '✅ Enabled' : '🔕 Denied';
+      result === 'granted' ? '✅ Enabled' : '🔕 Denied — check browser settings';
+    if (result === 'granted') renderSettings(container); // refresh to show test button
+  });
+
+  // Test notification
+  container.querySelector('#test-notif-row')?.addEventListener('click', async () => {
+    const { notify } = await import('../notifications/notifications.js');
+    await notify({
+      id:    'test_notif',
+      title: '🎉 MeinApp Notifications Work!',
+      body:  'You will now receive event reminders on time.',
+    });
   });
 
   // Export

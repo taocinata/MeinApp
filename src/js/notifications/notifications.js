@@ -1,8 +1,5 @@
 /**
  * notifications.js — Web Notifications API wrapper
- *
- * Handles permission request, firing notifications,
- * and registering action handlers (Done / Snooze).
  */
 
 let _permission = typeof Notification !== 'undefined' ? Notification.permission : 'default';
@@ -19,49 +16,52 @@ export function canNotify() {
 }
 
 /**
- * Show a browser notification.
- * Falls back to Service Worker notification if SW is registered (for actions support).
- *
- * @param {{ id, title, body, category, icon? }} opts
+ * Show a browser notification via Service Worker (preferred) or direct Notification API.
+ * Logs to console on failure so DevTools shows what went wrong.
  */
-export async function notify({ id, title, body, category, icon }) {
-  if (!canNotify()) return;
+export async function notify({ id, title, body, icon }) {
+  if (!canNotify()) {
+    console.warn('[notify] Permission not granted. status:', Notification.permission);
+    return false;
+  }
 
   const options = {
-    body,
-    icon: icon || '/icons/icon-192.png',
-    badge: '/icons/icon-192.png',
+    body: body || '',
+    icon: icon || '/icons/icon-192.svg',
+    badge: '/icons/icon-192.svg',
     tag: id,
     renotify: true,
-    data: { id, category },
-    actions: [
-      { action: 'done',  title: '✅ Done'  },
-      { action: 'snooze',title: '⏰ Snooze 10 min' },
-    ],
+    data: { id },
   };
 
-  // Prefer SW notification (supports action buttons)
+  // Try Service Worker notification first
   if ('serviceWorker' in navigator) {
-    const reg = await navigator.serviceWorker.ready;
-    if (reg && reg.showNotification) {
-      await reg.showNotification(title, options);
-      return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      if (reg?.showNotification) {
+        await reg.showNotification(title, options);
+        console.log('[notify] SW notification sent:', title);
+        return true;
+      }
+    } catch (err) {
+      console.warn('[notify] SW notification failed, falling back:', err);
     }
   }
 
-  // Fallback: direct Notification (no action buttons on some browsers)
-  new Notification(title, options);
+  // Fallback: direct Notification API
+  try {
+    new Notification(title, options);
+    console.log('[notify] Direct notification sent:', title);
+    return true;
+  } catch (err) {
+    console.error('[notify] Direct notification failed:', err);
+    return false;
+  }
 }
 
-/**
- * Listen for messages from the Service Worker
- * (e.g., "done" or "snooze" action was tapped).
- */
 export function onNotificationAction(handler) {
   if (!('serviceWorker' in navigator)) return;
   navigator.serviceWorker.addEventListener('message', (event) => {
-    if (event.data?.type === 'NOTIFICATION_ACTION') {
-      handler(event.data);
-    }
+    if (event.data?.type === 'NOTIFICATION_ACTION') handler(event.data);
   });
 }

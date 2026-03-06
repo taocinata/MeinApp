@@ -6,31 +6,14 @@
  */
 
 import db from '../db/db.js';
-import { showToast } from './toast.js';
 import { isoDate } from './calendar.js';
+import { requestPermission, canNotify } from '../notifications/notifications.js';
 
 let _eventsView = localStorage.getItem('dash_events_view') || 'list';
 
 export async function renderDashboard(container) {
-  const [routines, reminders, events] = await Promise.all([
-    db.routines.getAll(),
-    db.reminders.getAll(),
-    db.events.getAll(),
-  ]);
-
+  const events = await db.events.getAll();
   const today  = new Date();
-  const dayIdx = today.getDay();
-
-  const todayRoutines = routines.filter(r => {
-    const days = r.schedule?.days;
-    if (!days) return true;
-    return days.includes(dayIdx);
-  });
-
-  const soon = Date.now() + 2 * 3600 * 1000;
-  const upcomingReminders = reminders
-    .filter(r => r.status !== 'disabled' && r.nextTrigger && r.nextTrigger <= soon)
-    .sort((a, b) => a.nextTrigger - b.nextTrigger);
 
   container.innerHTML = `
     <div class="dashboard">
@@ -39,17 +22,17 @@ export async function renderDashboard(container) {
         <p>${formatDate(today)}</p>
       </div>
 
-      <section class="dashboard__section">
-        <div class="dashboard__section-header">
-          <h3>Today's Routines</h3>
-          <button class="btn btn--sm btn--ghost" data-nav="routines">See all</button>
+      ${!canNotify() ? `
+      <div id="notif-banner" style="
+        background:#FEF3C7;border:1px solid #FCD34D;border-radius:12px;
+        padding:12px 14px;margin-bottom:1.25rem;display:flex;
+        align-items:center;gap:10px;font-size:13px">
+        <span style="font-size:1.4rem">🔔</span>
+        <div style="flex:1">
+          <strong>Enable notifications</strong> to get reminders for your events.
         </div>
-        <div class="dashboard__list">
-          ${todayRoutines.length
-            ? todayRoutines.map(routineItemHTML).join('')
-            : emptyState('No routines scheduled for today.', '🌸')}
-        </div>
-      </section>
+        <button id="enable-notif-btn" class="btn btn--primary btn--sm">Enable</button>
+      </div>` : ''}
 
       <section class="dashboard__section">
         <div class="dashboard__section-header">
@@ -74,28 +57,18 @@ export async function renderDashboard(container) {
           ${renderEventsPreview(events, today, _eventsView)}
         </div>
       </section>
-
-      <section class="dashboard__section">
-        <div class="dashboard__section-header">
-          <h3>Upcoming Reminders</h3>
-        </div>
-        <div class="dashboard__list">
-          ${upcomingReminders.length
-            ? upcomingReminders.map(reminderItemHTML).join('')
-            : emptyState('No reminders due soon.', '✅')}
-        </div>
-      </section>
     </div>
   `;
 
-  // Done buttons on routines
-  container.querySelectorAll('[data-log-done]').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.stopPropagation();
-      await logCompletion(btn.dataset.logDone);
-      showToast('Marked as done! 🎉', 'success');
-      renderDashboard(container);
-    });
+  // Notification permission banner
+  container.querySelector('#enable-notif-btn')?.addEventListener('click', async () => {
+    const result = await requestPermission();
+    if (result === 'granted') {
+      container.querySelector('#notif-banner')?.remove();
+      // Reschedule now that permission is granted
+      const { rescheduleEvents } = await import('../scheduler/scheduler.js');
+      rescheduleEvents();
+    }
   });
 
   // Events view toggle
@@ -109,13 +82,6 @@ export async function renderDashboard(container) {
     );
     container.querySelector('#events-preview').innerHTML =
       renderEventsPreview(events, today, _eventsView);
-  });
-
-  // Nav shortcuts
-  container.querySelectorAll('[data-nav]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelector(`[data-view="${btn.dataset.nav}"]`)?.click();
-    });
   });
 }
 
@@ -140,7 +106,7 @@ function renderMiniCalendar(events, today) {
     if (ev.type === 'oneTime' && ev.date) {
       const [y, m, d] = ev.date.split('-').map(Number);
       if (y === year && m - 1 === month) {
-        (dotMap[d] = dotMap[d] || []).push(ev.color || '#7C3AED');
+        (dotMap[d] = dotMap[d] || []).push(ev.color || '#C4B5FD');
       }
     } else if (ev.type === 'recurring') {
       for (let d = 1; d <= daysInMonth; d++) {
@@ -152,7 +118,7 @@ function renderMiniCalendar(events, today) {
         const occurs = interval === 'daily' ||
           (interval === 'weekly'  && (days || []).includes(date.getDay())) ||
           (interval === 'monthly' && date.getDate() === dayOfMonth);
-        if (occurs) (dotMap[d] = dotMap[d] || []).push(ev.color || '#7C3AED');
+        if (occurs) (dotMap[d] = dotMap[d] || []).push(ev.color || '#C4B5FD');
       }
     }
   }
@@ -201,7 +167,7 @@ function renderUpcomingList(events, today) {
         <div class="upcoming-list__day-label">${g.label}</div>
         ${g.events.map(ev => `
           <div class="upcoming-list__event">
-            <span class="upcoming-list__event-dot" style="background:${ev.color || '#7C3AED'}"></span>
+            <span class="upcoming-list__event-dot" style="background:${ev.color || '#C4B5FD'}"></span>
             <span class="upcoming-list__event-title">${ev.title}</span>
             ${ev.time ? `<span class="upcoming-list__event-time">${ev.time}</span>` : ''}
           </div>`).join('')}
@@ -224,87 +190,16 @@ function eventOccursOn(ev, date, key) {
 
 // ── Item templates ────────────────────────────────────────
 
-function routineItemHTML(r) {
-  const catClass = { beauty: 'beauty', therapy: 'therapy', general: 'general' }[r.category] || 'general';
-  const catEmoji = { beauty: '💄', therapy: '💊', general: '📌' }[r.category] || '📌';
-  const isToday  = r.history?.some(h => isSameDay(new Date(h.timestamp), new Date()));
-  return `
-    <div class="routine-item${isToday ? ' is-done' : ''}">
-      <div class="routine-item__icon routine-item__icon--${catClass}">${catEmoji}</div>
-      <div class="routine-item__body">
-        <div class="routine-item__name">${r.name}</div>
-        <div class="routine-item__time">${scheduleLabel(r.schedule)}</div>
-      </div>
-      <div class="routine-item__actions">
-        ${isToday
-          ? '<span class="badge badge--success">Done ✓</span>'
-          : `<button class="btn btn--sm btn--primary" data-log-done="${r.id}">Done</button>`}
-      </div>
-    </div>`;
-}
-
-function reminderItemHTML(r) {
-  const catEmoji = { beauty: '💄', therapy: '💊', general: '📌' }[r.category] || '🔔';
-  return `
-    <div class="routine-item">
-      <div class="routine-item__icon routine-item__icon--general">${catEmoji}</div>
-      <div class="routine-item__body">
-        <div class="routine-item__name">${r.name}</div>
-        <div class="routine-item__time">${r.nextTrigger ? formatTime(new Date(r.nextTrigger)) : ''}</div>
-      </div>
-    </div>`;
-}
-
 function emptyState(msg, emoji) {
   return `<div class="dashboard__empty"><div style="font-size:2rem">${emoji}</div><p>${msg}</p></div>`;
 }
 
-// ── Data helpers ──────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────
 
-async function logCompletion(routineId) {
-  const routine = await db.routines.get(routineId);
-  if (!routine) return;
-  if (!routine.history) routine.history = [];
-  routine.history.push({ timestamp: Date.now(), type: 'completed' });
-  routine.streak = calcStreak(routine.history);
-  await db.routines.save(routine);
-  await db.logs.save({
-    id:          `log_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    category:    routine.category,
-    subcategory: routine.subcategory || null,
-    timestamp:   Date.now(),
-    notes:       `Completed: ${routine.name}`,
-    metadata:    { sourceId: routineId, sourceType: 'routine' },
-  });
-}
-
-function calcStreak(history) {
-  if (!history?.length) return 0;
-  const days   = [...new Set(history.map(h => new Date(h.timestamp).toDateString()))].sort().reverse();
-  let streak   = 0;
-  let cursor   = new Date(); cursor.setHours(0, 0, 0, 0);
-  for (const s of days) {
-    const d = new Date(s);
-    if (d.getTime() === cursor.getTime()) { streak++; cursor.setDate(cursor.getDate() - 1); }
-    else if (d < cursor) break;
-  }
-  return streak;
-}
-
-function isSameDay(a, b)  { return a.toDateString() === b.toDateString(); }
-function scheduleLabel(s) {
-  if (!s) return 'Any time';
-  if (s.interval === 'daily')  return `Daily · ${(s.times || []).join(', ')}`;
-  if (s.interval === 'weekly') return `Weekly · ${s.time || ''}`;
-  return 'Custom';
-}
 function getGreeting() {
   const h = new Date().getHours();
   return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 }
 function formatDate(d) {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
-}
-function formatTime(d) {
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }

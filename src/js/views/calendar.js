@@ -8,6 +8,7 @@
 import db from '../db/db.js';
 import { showToast } from './toast.js';
 import { deleteEvent } from '../utils/deleteEvent.js';
+import { rescheduleEvents } from '../scheduler/scheduler.js';
 
 // ── State ─────────────────────────────────────────────────
 let _year  = new Date().getFullYear();
@@ -384,6 +385,7 @@ export function showAddEventModal({ defaultDate, defaultCategory = 'general', ex
     };
 
     await db.events.save(event);
+    rescheduleEvents(); // reschedule push notifications for updated event list
     overlay.remove();
     showToast(isEdit ? `"${title}" updated! ✏️` : `"${title}" saved! 🎉`, 'success');
     onSaved?.();

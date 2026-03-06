@@ -198,5 +198,64 @@ JS source moved from `public/js/` → `src/js/`. esbuild added to bundle + minif
 | Runtime dependencies | **0** |
 
 ---
+## Session — 2026-03-06: Colors change and unused code delete, remainders/notification on event  
+
+
+ ✅ Changes
+
+  1. History — Children category added (history.js)
+
+   - Added 'children' to CATEGORIES filter list (Log tab chips)
+   - Added to CAT_COLORS, bar chart CATS, bucket counts, and insights catCounts
+   - Children shows with 👨‍👩‍👧 emoji in the insights breakdown
+
+  2. Pastel colors everywhere (history.js, dashboard.js, _dashboard.scss)
+
+   - beauty → #F9A8D4 pastel pink
+   - therapy → #C4B5FD pastel purple (was blue)
+   - general → #FDBA74 pastel orange
+   - personal → #FCD34D pastel yellow
+   - children → #6EE7B7 pastel green
+   - SCSS icon backgrounds updated with --personal and --children variants added
+
+  3. Event push notifications (scheduler.js)
+
+   - Scheduler now also checks all events each minute
+   - If an event has a time set and occurs today (one-time or recurring), it fires a browser push notification at that exact time
+   - Notified events are tracked in localStorage (keyed by eventId:date) to avoid duplicates — auto-pruned daily
+
+  4. Dashboard simplified (dashboard.js)
+
+   - Removed Today's Routines section (always empty, redundant with Events tab)
+   - Removed Upcoming Reminders section (not used)
+   - Dashboard now shows only the Upcoming Events section (list/calendar toggle, next 7 days)
+
+## Session — 2026-03-06: Notification doesn't fire 
+
+
+     🐛 Root causes & fixes
+
+  1. Polling had a 60-second blind spot → replaced with exact setTimeout
+
+   - Old code polled every minute and only fired if the event time was within the last 60 seconds — easy to miss
+   - New code calls rescheduleEvents() on boot and schedules a precise setTimeout for every upcoming event in the next 48 hours
+   - When you add/edit an event, rescheduleEvents() is called immediately so the new event is scheduled right away
+
+  2. Events without a time were silently skipped → default 09:00 notification
+
+   - Events with no time set now get a morning reminder at 09:00 on their date
+
+  3. Missed events were lost forever → catch-up on app open
+
+   - On startup, any event that was due in the last 2 hours (and not yet notified) fires immediately — so opening the app shortly after an event time still gives you the 
+  notification
+
+  4. No visible permission prompt → yellow banner on dashboard
+
+   - If notifications aren't granted, a "🔔 Enable notifications" banner now appears prominently on the dashboard
+   - The Settings → Notifications section now shows a "▶ Send test" button so you can confirm it works
+
+  ⚠️ Important for the installed desktop app: When the PWA is fully closed, JS can't run so no notifications fire. Keep the app open or minimized (not quit) for on-time
+  delivery — this is a limitation of client-only PWAs without a push server. The catch-up feature handles the case where you re-open it shortly after.
 
 *Maintained by GitHub Copilot CLI. Update after each session.*

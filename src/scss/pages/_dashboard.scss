@@ -65,9 +65,11 @@
     flex-shrink: 0;
     font-size: 20px;
 
-    &--beauty  { background: #FCE7F3; }
-    &--therapy { background: #EDE9FE; }
-    &--general { background: #E0F2FE; }
+    &--beauty   { background: #FCE7F3; }
+    &--therapy  { background: #EDE9FE; }
+    &--general  { background: #FEF3C7; }
+    &--personal { background: #FEF9C3; }
+    &--children { background: #D1FAE5; }
   }
 
   &__body { flex: 1; min-width: 0; }

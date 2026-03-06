@@ -6,7 +6,7 @@ import db from '../db/db.js';
 import { showAddEventModal } from './calendar.js';
 import { deleteEvent } from '../utils/deleteEvent.js';
 
-const CATEGORIES = ['all', 'beauty', 'therapy', 'general', 'personal'];
+const CATEGORIES = ['all', 'beauty', 'therapy', 'general', 'personal', 'children'];
 let _activeFilter  = 'all';
 let _activeTab     = 'log';
 let _chartOffset   = 0;   // 0 = current 7 days, 1 = previous 7 days, etc.
@@ -14,10 +14,11 @@ let _container     = null; // track container to avoid duplicate listeners
 let _clickHandler  = null;
 
 const CAT_COLORS = {
-  beauty:   '#EC4899',  // pink
-  therapy:  '#3B82F6',  // blue
-  general:  '#F97316',  // orange
-  personal: '#EAB308',  // yellow
+  beauty:   '#F9A8D4',  // pastel pink
+  therapy:  '#C4B5FD',  // pastel purple
+  general:  '#FDBA74',  // pastel orange
+  personal: '#FCD34D',  // pastel yellow
+  children: '#6EE7B7',  // pastel green
 };
 
 export async function renderHistory(container) {
@@ -154,8 +155,7 @@ function renderLogList(items, filter) {
 }
 
 function logEntryHTML({ dateKey, ev }) {
-  const catColors = { beauty: '#EC4899', therapy: '#7C3AED', general: '#06B6D4', personal: '#F59E0B' };
-  const color = ev.color || catColors[ev.category] || '#9CA3AF';
+  const color = ev.color || CAT_COLORS[ev.category] || '#9CA3AF';
   const typeTag = ev.type === 'recurring'
     ? `<span style="font-size:10px;background:var(--color-border);padding:1px 5px;border-radius:9999px">🔁 recurring</span>`
     : '';
@@ -198,7 +198,7 @@ function renderInsightsTab(events) {
   const last7  = items.filter(i => new Date(i.dateKey).getTime() > now - 7  * day);
   const last30 = items.filter(i => new Date(i.dateKey).getTime() > now - 30 * day);
 
-  const catCounts = { beauty: 0, therapy: 0, general: 0, personal: 0 };
+  const catCounts = { beauty: 0, therapy: 0, general: 0, personal: 0, children: 0 };
   for (const i of last30) { if (catCounts[i.ev.category] !== undefined) catCounts[i.ev.category]++; }
 
   const recurringCount = events.filter(e => e.type === 'recurring').length;
@@ -222,8 +222,7 @@ function renderInsightsTab(events) {
         <div style="margin-top:12px">
           ${Object.entries(catCounts).map(([cat, count]) => {
             const pct = Math.round((count / total30) * 100);
-            const colors = { beauty: '#EC4899', therapy: '#7C3AED', general: '#06B6D4', personal: '#F59E0B' };
-            const emojis = { beauty: '💄', therapy: '💊', general: '📌', personal: '🌟' };
+            const emojis = { beauty: '💄', therapy: '💊', general: '📌', personal: '🌟', children: '👨‍👩‍👧' };
             return `
               <div style="margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
@@ -231,7 +230,7 @@ function renderInsightsTab(events) {
                   <span style="color:var(--color-muted)">${count} (${pct}%)</span>
                 </div>
                 <div style="height:8px;background:var(--color-border);border-radius:9999px;overflow:hidden">
-                  <div style="height:100%;width:${pct}%;background:${colors[cat]};border-radius:9999px"></div>
+                  <div style="height:100%;width:${pct}%;background:${CAT_COLORS[cat] || '#9CA3AF'};border-radius:9999px"></div>
                 </div>
               </div>`;
           }).join('')}
@@ -249,7 +248,7 @@ function buildBarChart(items) {
     const d = new Date(today);
     d.setDate(d.getDate() - i - _chartOffset * 7);
     const key = localISO(d);  // ← local date, matches event dateKeys
-    const counts = { beauty: 0, therapy: 0, general: 0, personal: 0 };
+    const counts = { beauty: 0, therapy: 0, general: 0, personal: 0, children: 0 };
     for (const it of items) {
       if (it.dateKey === key && counts[it.ev.category] !== undefined) counts[it.ev.category]++;
     }
@@ -260,7 +259,7 @@ function buildBarChart(items) {
   const CHART_H = 50;   // usable SVG units
   const BASELINE = 62;  // y bottom of bars
   const barW = 100 / 7;
-  const CATS = ['general', 'beauty', 'therapy', 'personal'];
+  const CATS = ['general', 'beauty', 'therapy', 'personal', 'children'];
 
   const bars = buckets.map((b, i) => {
     const total = Object.values(b.counts).reduce((a,v)=>a+v,0);
