@@ -3,6 +3,7 @@
  *
  * 1. Writes public/version.json  { version, buildTime }
  * 2. Updates CACHE_NAME in public/sw.js so each deploy busts the SW cache
+ * 3. Patches bundle script tag in index.html with ?v=HASH so browser always fetches fresh JS
  */
 
 const { execSync } = require('child_process');
@@ -33,3 +34,10 @@ let sw = fs.readFileSync(swPath, 'utf8');
 sw = sw.replace(/const CACHE_NAME\s*=\s*['"][^'"]*['"]/, `const CACHE_NAME = 'meinapp-${version}'`);
 fs.writeFileSync(swPath, sw);
 console.log(`[version] sw.js CACHE_NAME → meinapp-${version}`);
+
+// 3. Patch bundle script tag in index.html with ?v=HASH
+const indexPath = path.join(root, 'public', 'index.html');
+let html = fs.readFileSync(indexPath, 'utf8');
+html = html.replace(/bundle\.min\.js(\?v=[^"]*)?/, `bundle.min.js?v=${buildTime}`);
+fs.writeFileSync(indexPath, html);
+console.log(`[version] index.html bundle → bundle.min.js?v=${buildTime}`);

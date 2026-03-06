@@ -6,7 +6,7 @@
  *  - CSS / icons / manifest: cache-first (stable assets)
  */
 
-const CACHE_NAME = 'meinapp-ac8a2fd';
+const CACHE_NAME = 'meinapp-6c6dedb';
 
 // Assets that are stable and safe to serve from cache
 const CACHE_FIRST_PATTERNS = [/\.css$/, /\.svg$/, /\.png$/, /manifest\.json$/];
